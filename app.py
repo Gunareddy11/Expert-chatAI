@@ -1,50 +1,52 @@
-import os
 import streamlit as st
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from langchain.schema import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
-# Load environment variables
+# Load local .env (useful for local dev, Streamlit Cloud uses secrets)
 load_dotenv()
 
-# Initialize Groq model
-chat_model = ChatGroq(model="llama3-8b-8192")
+# Sidebar settings
+st.sidebar.title("⚙️ Settings")
+model_choice = st.sidebar.selectbox(
+    "Choose a model",
+    ["llama-3.1-70b-versatile", "mixtral-8x7b-32768"]  # ✅ correct names
+)
 
-# Streamlit UI
-st.title("💬 Expert Chatbot (Groq + LangChain)")
-st.write("Ask me anything!")
+# Initialize Groq chat model
+chat_model = ChatGroq(model=model_choice)
 
-# Initialize session state for chat history
+# Streamlit app setup
+st.set_page_config(page_title="Expert Chat AI", page_icon="🤖")
+st.title("🤖 Expert Chat AI")
+
+# Initialize conversation history
 if "messages" not in st.session_state:
-    st.session_state["messages"] = []
+    st.session_state["messages"] = [
+        SystemMessage(content="You are an expert assistant. Answer clearly and helpfully.")
+    ]
 
-# Display chat history
+# Display previous messages
 for msg in st.session_state["messages"]:
-    if isinstance(msg, HumanMessage):
-        with st.chat_message("user"):
-            st.markdown(msg.content)
-    elif isinstance(msg, AIMessage):
-        with st.chat_message("assistant"):
+    role = "user" if isinstance(msg, HumanMessage) else "assistant"
+    if not isinstance(msg, SystemMessage):
+        with st.chat_message(role):
             st.markdown(msg.content)
 
 # User input
-if prompt := st.chat_input("Type your question..."):
+user_input = st.chat_input("Ask me anything...")
+
+if user_input:
     # Add user message
-    user_msg = HumanMessage(content=prompt)
-    st.session_state["messages"].append(user_msg)
+    st.session_state["messages"].append(HumanMessage(content=user_input))
 
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    # Get response
+    response = chat_model.invoke(st.session_state["messages"])
+    ai_message = AIMessage(content=response.content)
 
-    # Get response from Groq model
-    try:
-        response = chat_model.invoke(st.session_state["messages"])
-        bot_msg = AIMessage(content=response.content)
-        st.session_state["messages"].append(bot_msg)
+    # Add AI response
+    st.session_state["messages"].append(ai_message)
 
-        with st.chat_message("assistant"):
-            st.markdown(response.content)
-
-    except Exception as e:
-        st.error(f"Error: {e}")
-
+    # Show AI response
+    with st.chat_message("assistant"):
+        st.markdown(ai_message.content)
