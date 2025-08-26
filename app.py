@@ -1,10 +1,14 @@
 import streamlit as st
+import os
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
-# Load local .env (useful for local dev, Streamlit Cloud uses secrets)
+# Load local .env (only used for local development)
 load_dotenv()
+
+# Get API key (first try .env, then Streamlit secrets)
+groq_api_key = os.getenv("GROQ_API_KEY") or st.secrets["GROQ_API_KEY"]
 
 # Sidebar settings
 st.sidebar.title("⚙️ Settings")
@@ -14,7 +18,7 @@ model_choice = st.sidebar.selectbox(
 )
 
 # Initialize Groq chat model
-chat_model = ChatGroq(model=model_choice)
+chat_model = ChatGroq(model=model_choice, api_key=groq_api_key)
 
 # Streamlit app setup
 st.set_page_config(page_title="Expert Chat AI", page_icon="🤖")
@@ -50,3 +54,4 @@ if user_input:
     # Show AI response
     with st.chat_message("assistant"):
         st.markdown(ai_message.content)
+
