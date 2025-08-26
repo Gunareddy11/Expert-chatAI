@@ -1,15 +1,18 @@
-# Ignore environment file (API keys)
-.env
-
-# Python cache files
+# Ignore Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Streamlit secrets (local only)
+# Ignore virtual environment folders
+.venv/
+venv/
+env/
+
+# Ignore dotenv files (local secrets)
+.env
+
+# Ignore Streamlit secrets (cloud secrets)
 .streamlit/secrets.toml
 
-# OS junk files
-.DS_Store
-Thumbs.db
+
