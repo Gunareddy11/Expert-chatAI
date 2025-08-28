@@ -1,59 +1,57 @@
-import streamlit as st
 import os
+import streamlit as st
 from groq import Groq
-from dotenv import load_dotenv
 
-# Load environment variables from .env
-load_dotenv()
-api_key = os.getenv("GROQ_API_KEY")
+# Load API key from environment variable
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    st.error("❌ GROQ_API_KEY not found. Please set it in .env or GitHub Secrets.")
+    st.stop()
 
 # Initialize Groq client
-client = Groq(api_key=api_key)
+client = Groq(api_key=GROQ_API_KEY)
 
-# Streamlit UI setup
-st.set_page_config(page_title="Chatbot with Groq", page_icon="🤖", layout="wide")
-st.title("🤖 Chatbot (Groq + Streamlit)")
+# Streamlit UI
+st.set_page_config(page_title="Groq Chatbot", page_icon="🤖", layout="centered")
+st.title("🤖 Chatbot with Groq API")
 
-# Session state for chat messages
+# Store chat history in Streamlit session
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [
-        {"role": "system", "content": "You are a helpful AI assistant."}
-    ]
+    st.session_state["messages"] = []
 
-# Display previous chat history
-for message in st.session_state["messages"]:
-    if message["role"] == "user":
-        st.chat_message("user").markdown(message["content"])
-    elif message["role"] == "assistant":
-        st.chat_message("assistant").markdown(message["content"])
+# Display previous messages
+for msg in st.session_state["messages"]:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])   # ✅ fixed (no object subscript issue)
 
-# User input
-if prompt := st.chat_input("Ask me anything..."):
-    # Save user input
+# Chat input
+if prompt := st.chat_input("Type your message..."):
+    # Add user message to session
     st.session_state["messages"].append({"role": "user", "content": prompt})
-    st.chat_message("user").markdown(prompt)
 
-    # ✅ Token truncation fix (avoid 413 error)
-    MAX_HISTORY = 8  # keep system + last 7 turns
-    if len(st.session_state["messages"]) > MAX_HISTORY:
-        st.session_state["messages"] = (
-            [st.session_state["messages"][0]]  # keep system
-            + st.session_state["messages"][-(MAX_HISTORY - 1):]
-        )
+    # Display user message
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    try:
-        # Call Groq API
-        chat_completion = client.chat.completions.create(
-            messages=st.session_state["messages"],
-            model="llama-3.3-70b-versatile",  # You can switch to mistral-saba-24b if still heavy
-            temperature=0.7,
-            max_tokens=800,
-        )
+    # Generate response from Groq
+    with st.chat_message("assistant"):
+        try:
+            response = client.chat.completions.create(
+                model="llama-3.1-8b-instant",   # ✅ safe model
+                messages=[
+                    {"role": m["role"], "content": m["content"]}
+                    for m in st.session_state["messages"]
+                ],
+                temperature=0.7,
+                max_tokens=512
+            )
 
-        # Extract response
-        reply = chat_completion.choices[0].message["content"]
-        st.session_state["messages"].append({"role": "assistant", "content": reply})
-        st.chat_message("assistant").markdown(reply)
+            reply = response.choices[0].message.content  # ✅ fixed
+            st.markdown(reply)
 
-    except Exception as e:
-        st.error(f"🚨 Error: {str(e)}")
+            # Add assistant response to session
+            st.session_state["messages"].append({"role": "assistant", "content": reply})
+
+        except Exception as e:
+            st.error(f"🚨 Error: {e}")
+
