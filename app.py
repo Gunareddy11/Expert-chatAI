@@ -12,8 +12,8 @@ if not GROQ_API_KEY:
 client = Groq(api_key=GROQ_API_KEY)
 
 # Streamlit UI
-st.set_page_config(page_title="Groq Chatbot", page_icon="🤖", layout="centered")
-st.title("🤖 Chatbot with Groq API")
+st.set_page_config(page_title="EXPERT Chat AI", page_icon="🤖", layout="centered")
+st.title("🤖 EXPERT Chat AI")
 
 # Store chat history in Streamlit session
 if "messages" not in st.session_state:
@@ -54,4 +54,5 @@ if prompt := st.chat_input("Type your message..."):
 
         except Exception as e:
             st.error(f"🚨 Error: {e}")
+
 
