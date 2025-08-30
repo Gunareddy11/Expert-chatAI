@@ -11,71 +11,48 @@ if not GROQ_API_KEY:
 # Initialize Groq client
 client = Groq(api_key=GROQ_API_KEY)
 
-# Streamlit UI
+# ✅ Page setup
 st.set_page_config(page_title="EXPERT Chat AI", page_icon="🤖", layout="centered")
 
-# 🔒 Sticky header with CSS
+# ✅ Static heading (always on top)
 st.markdown(
     """
-    <style>
-        .fixed-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: white;
-            padding: 15px;
-            font-size: 24px;
-            font-weight: bold;
-            z-index: 1000;
-            border-bottom: 2px solid #ddd;
-        }
-        .block-container {
-            padding-top: 70px; /* push content down */
-        }
-    </style>
-    <div class="fixed-header">🤖 EXPERT Chat AI</div>
+    <h1 style='text-align: center; color: #4CAF50;'>🤖 EXPERT Chat AI</h1>
+    <hr>
     """,
     unsafe_allow_html=True
 )
 
-# Store chat history in Streamlit session
+# Store chat history
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-# Display previous messages
+# Display previous messages (scrollable)
 for msg in st.session_state["messages"]:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])   # ✅ fixed (no object subscript issue)
+        st.markdown(msg["content"])
 
 # Chat input
 if prompt := st.chat_input("Type your message..."):
-    # Add user message to session
+    # Add user message
     st.session_state["messages"].append({"role": "user", "content": prompt})
-
-    # Display user message
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate response from Groq
+    # Get AI response
     with st.chat_message("assistant"):
         try:
             response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",   # ✅ safe model
-                messages=[
-                    {"role": m["role"], "content": m["content"]}
-                    for m in st.session_state["messages"]
-                ],
+                model="llama-3.1-8b-instant",
+                messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state["messages"]],
                 temperature=0.7,
                 max_tokens=512
             )
-
-            reply = response.choices[0].message.content  # ✅ fixed
+            reply = response.choices[0].message.content
             st.markdown(reply)
 
-            # Add assistant response to session
+            # Save assistant reply
             st.session_state["messages"].append({"role": "assistant", "content": reply})
 
         except Exception as e:
             st.error(f"🚨 Error: {e}")
-
