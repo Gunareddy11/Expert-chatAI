@@ -1,4 +1,4 @@
-explain the code import os
+import os
 import streamlit as st
 from groq import Groq
 
@@ -54,5 +54,6 @@ if prompt := st.chat_input("Type your message..."):
 
         except Exception as e:
             st.error(f"🚨 Error: {e}")
+
 
 
