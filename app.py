@@ -13,7 +13,31 @@ client = Groq(api_key=GROQ_API_KEY)
 
 # Streamlit UI
 st.set_page_config(page_title="EXPERT Chat AI", page_icon="🤖", layout="centered")
-st.title("🤖 EXPERT Chat AI")
+
+# 🔒 Sticky header with CSS
+st.markdown(
+    """
+    <style>
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            padding: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 1000;
+            border-bottom: 2px solid #ddd;
+        }
+        .block-container {
+            padding-top: 70px; /* push content down */
+        }
+    </style>
+    <div class="fixed-header">🤖 EXPERT Chat AI</div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Store chat history in Streamlit session
 if "messages" not in st.session_state:
@@ -54,5 +78,4 @@ if prompt := st.chat_input("Type your message..."):
 
         except Exception as e:
             st.error(f"🚨 Error: {e}")
-
 
