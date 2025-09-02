@@ -14,7 +14,7 @@ client = Groq(api_key=GROQ_API_KEY)
 # Streamlit Page Setup
 st.set_page_config(page_title="EXPERT Chat AI", page_icon="🤖", layout="centered")
 
-# 🔹 Always show heading (static, even while scrolling)
+# 🔹 Always show heading (sticky header)
 st.markdown(
     """
     <div style="position:fixed; top:0; width:100%; background:white; padding:10px; 
@@ -43,16 +43,16 @@ if prompt := st.chat_input("Type your message..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Limit history to avoid hitting token limit (last 5 messages only)
-    history = st.session_state["messages"][-5:]
+    # Use full history (instead of just last 5) but cap at 30 messages
+    history = st.session_state["messages"][-30:]
 
     with st.chat_message("assistant"):
         try:
             response = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[{"role": m["role"], "content": m["content"]} for m in history],
-                temperature=0.7,
-                max_tokens=512
+                temperature=0.5,   # lower = more focused, factual
+                max_tokens=1200    # allow longer answers
             )
 
             reply = response.choices[0].message.content
@@ -63,4 +63,3 @@ if prompt := st.chat_input("Type your message..."):
 
         except Exception as e:
             st.error(f"🚨 Error: {e}")
-
